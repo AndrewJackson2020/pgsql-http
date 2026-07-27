@@ -143,8 +143,30 @@ typedef enum {
 typedef enum {
 	CURLOPT_STRING,
 	CURLOPT_LONG,
-	CURLOPT_BLOB
+	CURLOPT_BLOB,
+	CURLOPT_LONG_BITMASK
 } http_curlopt_type;
+
+/* CURLOPT_HTTPAUTH string/enum value mapping */
+typedef struct {
+	char *str;
+	unsigned long val;
+} http_curlopt_auth;
+
+static http_curlopt_auth settable_curlopts_auth[] = {
+	{ "CURLAUTH_BASIC", CURLAUTH_BASIC },
+	{ "CURLAUTH_DIGEST", CURLAUTH_DIGEST },
+	{ "CURLAUTH_DIGEST_IE", CURLAUTH_DIGEST_IE },
+	{ "CURLAUTH_BEARER", CURLAUTH_BEARER },
+	{ "CURLAUTH_NEGOTIATE", CURLAUTH_NEGOTIATE },
+	{ "CURLAUTH_NTLM", CURLAUTH_NTLM },
+	{ "CURLAUTH_NTLM_WB", CURLAUTH_NTLM_WB },
+	{ "CURLAUTH_ANY", CURLAUTH_ANY },
+	{ "CURLAUTH_ANYSAFE", CURLAUTH_ANYSAFE },
+	{ "CURLAUTH_ONLY", CURLAUTH_ONLY },
+	{ "CURLAUTH_AWS_SIGV4", CURLAUTH_AWS_SIGV4 },
+	{ NULL, 0 },
+};
 
 /* CURLOPT string/enum value mapping */
 typedef struct {
@@ -155,7 +177,6 @@ typedef struct {
 	char *curlopt_val;
 	char *curlopt_guc;
 } http_curlopt;
-
 
 /* CURLOPT values we allow user to set at run-time */
 /* Be careful adding these, as they can be a security risk */
@@ -208,6 +229,7 @@ static http_curlopt settable_curlopts[] = {
 	{ CURLOPT_SSLKEY_BLOB, CURLOPT_BLOB, false, "CURLOPT_SSLKEY_BLOB", NULL, NULL },
 	{ CURLOPT_SSLCERT_BLOB, CURLOPT_BLOB, false, "CURLOPT_SSLCERT_BLOB", NULL, NULL },
 #endif
+	{ CURLOPT_HTTPAUTH, CURLOPT_LONG_BITMASK, false, "CURLOPT_HTTPAUTH", NULL, NULL },
 	{ 0, 0, false, NULL, NULL, NULL } /* Array null terminator */
 };
 
@@ -958,6 +980,22 @@ set_curlopt(CURL* handle, const http_curlopt *opt)
 		elog(DEBUG2, "pgsql-http: set '%s' to value '%s', return value = %d", opt->curlopt_guc, opt->curlopt_val, err);
 	}
 #endif
+	/* Only used for CURLOPT_HTTPAUTH */
+	else if ((opt->curlopt_type == CURLOPT_LONG_BITMASK) && (opt->curlopt == CURLOPT_HTTPAUTH))
+	{
+		http_curlopt_auth *opt_auth = settable_curlopts_auth;
+		while (opt_auth){
+			if (strcasecmp(opt_auth->str, opt->curlopt_val) == 0)
+			{
+
+				err = curl_easy_setopt(handle, opt->curlopt, opt_auth->val);
+				break;
+			}
+
+			opt_auth++;
+		}
+
+	}
 	else
 	{
 		/* Never get here */
