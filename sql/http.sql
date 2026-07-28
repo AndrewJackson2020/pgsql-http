@@ -209,3 +209,11 @@ SELECT *
 SELECT round(extract(epoch FROM now() - start) * 10) AS m
   FROM timer;
 DROP TABLE timer;
+
+SELECT http_set_curlopt('CURLOPT_HTTPAUTH', 'CURLAUTH_NEGOTIATE');
+
+SHOW http.CURLOPT_HTTPAUTH;
+
+RESET http.CURLOPT_HTTPAUTH;
+
+SHOW http.CURLOPT_HTTPAUTH;

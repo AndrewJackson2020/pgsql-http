@@ -993,22 +993,39 @@ set_curlopt(CURL* handle, const http_curlopt *opt)
 		elog(DEBUG2, "pgsql-http: set '%s' to value '%s', return value = %d", opt->curlopt_guc, opt->curlopt_val, err);
 	}
 #endif
+#if LIBCURL_VERSION_NUM >= 0x070a06 /* 7.10.6 */
 	/* Only used for CURLOPT_HTTPAUTH */
-	else if ((opt->curlopt_type == CURLOPT_LONG_BITMASK) && (opt->curlopt == CURLOPT_HTTPAUTH))
+	else if (opt->curlopt_type == CURLOPT_LONG_BITMASK)
 	{
-		http_curlopt_auth *opt_auth = settable_curlopts_auth;
-		while (opt_auth){
-			if (strcasecmp(opt_auth->str, opt->curlopt_val) == 0)
+		if (opt->curlopt == CURLOPT_HTTPAUTH)
+		{
+			http_curlopt_auth *opt_auth = settable_curlopts_auth;
+			bool curlopt_httpauth_found = false;
+			while (opt_auth->str)
 			{
+				if (strcasecmp(opt_auth->str, opt->curlopt_val) == 0)
+				{
 
-				err = curl_easy_setopt(handle, opt->curlopt, opt_auth->val);
-				break;
+					err = curl_easy_setopt(handle, opt->curlopt, opt_auth->val);
+					curlopt_httpauth_found = true;
+					break;
+				}
+
+				opt_auth++;
 			}
-
-			opt_auth++;
+			if (!curlopt_httpauth_found)
+			{
+				elog(ERROR, "invalid curl httpauth option, '%s'", opt->curlopt_val);
+				return false;
+			}
 		}
-
+		else
+		{
+			/* Never get here */
+			elog(ERROR, "curl option '%d' is not available for run-time configuration", opt->curlopt);
+		}
 	}
+#endif
 	else
 	{
 		/* Never get here */
