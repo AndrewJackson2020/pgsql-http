@@ -1191,6 +1191,27 @@ Datum http_set_curlopt(PG_FUNCTION_ARGS)
 	{
 		if (strcasecmp(opt->curlopt_str, curlopt) == 0)
 		{
+			if (opt->curlopt == CURLOPT_HTTPAUTH)
+			{
+				http_curlopt_auth *opt_auth = settable_curlopts_auth;
+				bool curlopt_httpauth_found = false;
+				while (opt_auth->str)
+				{
+					if (strcasecmp(opt_auth->str, value) == 0)
+					{
+						curlopt_httpauth_found = true;
+						break;
+					}
+					opt_auth++;
+				}
+				if (!curlopt_httpauth_found)
+				{
+					elog(ERROR, "curl httpauth option '%s' invalid", value);
+					PG_RETURN_BOOL(false);
+				}
+
+			}
+
 			if (opt->curlopt_val) guc_free(opt->curlopt_val);
 			opt->curlopt_val = guc_strdup(ERROR, value);
 			PG_RETURN_BOOL(set_curlopt(handle, opt));

@@ -334,3 +334,11 @@ SHOW http.CURLOPT_HTTPAUTH;
  
 (1 row)
 
+SELECT http_set_curlopt('CURLOPT_HTTPAUTH', 'DOES_NOT_EXIST');
+ERROR:  curl httpauth option 'DOES_NOT_EXIST' invalid
+SHOW http.CURLOPT_HTTPAUTH;
+ http.curlopt_httpauth 
+-----------------------
+ 
+(1 row)
+
