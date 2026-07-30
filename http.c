@@ -67,6 +67,8 @@
 #include <utils/guc.h>
 #include "common/base64.h"
 #include "miscadmin.h"
+#include "libpq/libpq-be.h"
+
 
 
 
