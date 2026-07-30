@@ -1303,6 +1303,7 @@ Datum http_request(PG_FUNCTION_ARGS)
 	 */
 	if (MyProcPort != NULL && MyProcPort->has_scram_keys){
 		int	len;
+		int	encoded_len;
 		char   *scram_client_key_base64;
 		char   *scram_server_key_base64;
 		char   *scram_client_key_base64_header;
@@ -1310,7 +1311,7 @@ Datum http_request(PG_FUNCTION_ARGS)
 
 		len = pg_b64_enc_len(sizeof(MyProcPort->scram_ClientKey));
 		/* don't forget the zero-terminator */
-		values[n] = palloc0(len + 1);
+		scram_client_key_base64 = palloc0(len + 1);
 		encoded_len = pg_b64_encode(MyProcPort->scram_ClientKey,
 					    sizeof(MyProcPort->scram_ClientKey),
 					    scram_client_key_base64, len);
