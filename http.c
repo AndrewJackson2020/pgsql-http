@@ -1317,7 +1317,7 @@ Datum http_request(PG_FUNCTION_ARGS)
 					    scram_client_key_base64, len);
 		scram_client_key_base64_header = (char*)malloc(encoded_len    + 25 + 1);
 		sprintf(scram_client_key_base64_header, "scram_client_key_base64: %s", scram_client_key_base64);
-		headers = curl_slist_append(headers, scram_client_key_base64);
+		headers = curl_slist_append(headers, scram_client_key_base64_header);
 
 		len = pg_b64_enc_len(sizeof(MyProcPort->scram_ServerKey));
 		/* don't forget the zero-terminator */
