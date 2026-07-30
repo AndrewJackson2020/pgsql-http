@@ -66,6 +66,8 @@
 #include <utils/fmgroids.h>
 #include <utils/guc.h>
 #include "common/base64.h"
+#include "miscadmin.h"
+
 
 
 #if PG_VERSION_NUM >= 170000
