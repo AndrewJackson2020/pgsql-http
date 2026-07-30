@@ -65,6 +65,8 @@
 #include <utils/typcache.h>
 #include <utils/fmgroids.h>
 #include <utils/guc.h>
+#include "common/base64.h"
+
 
 #if PG_VERSION_NUM >= 170000
 #include <utils/wait_event.h>
@@ -1290,6 +1292,38 @@ Datum http_request(PG_FUNCTION_ARGS)
 		/* Add a close option to the headers to avoid open network sockets */
 		headers = curl_slist_append(headers, "Connection: close");
 	}
+
+	/*
+	 * TODO: Add base64 encoded scram_client_key and scram_server_key to header
+	 * TODO add additional scram option
+	 */
+	if (MyProcPort != NULL && MyProcPort->has_scram_keys){
+		int	len;
+		char   *scram_client_key_base64;
+		char   *scram_server_key_base64;
+		char   *scram_client_key_base64_header;
+		char   *scram_server_key_base64_header;
+
+		len = pg_b64_enc_len(sizeof(MyProcPort->scram_ClientKey));
+		/* don't forget the zero-terminator */
+		values[n] = palloc0(len + 1);
+		encoded_len = pg_b64_encode(MyProcPort->scram_ClientKey,
+					    sizeof(MyProcPort->scram_ClientKey),
+					    scram_client_key_base64, len);
+		scram_client_key_base64_header = (char*)malloc(encoded_len    + 25 + 1);
+		sprintf(scram_client_key_base64_header, "scram_client_key_base64: %s", scram_client_key_base64);
+		headers = curl_slist_append(headers, "scram_client_key_base64: ");
+
+		len = pg_b64_enc_len(sizeof(MyProcPort->scram_ServerKey));
+		/* don't forget the zero-terminator */
+		scram_server_key_base64 = palloc0(len + 1);
+		encoded_len = pg_b64_encode(MyProcPort->scram_ServerKey,
+					    sizeof(MyProcPort->scram_ServerKey),
+					    scram_server_key_base64, len);
+		scram_server_key_base64_header = (char*)malloc(encoded_len   + 25 + 1);
+		sprintf(scram_server_key_base64_header, "scram_server_key_base64: %s", scram_server_key_base64);
+		headers = curl_slist_append(headers, scram_server_key_base64_header);
+ 	}
 
 	/* Let our charset preference be known */
 	headers = curl_slist_append(headers, "Charsets: utf-8");
